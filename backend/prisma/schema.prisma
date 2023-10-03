@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @unique @default(cuid())
+  auth0Id       String     @unique
+  name          String
+  email         String     @unique
+  defaultTeam   Team?      @relation(fields: [defaultTeamId], references: [id])
+  defaultTeamId String?
+  UserTeam      UserTeam[]
+  Tickets       Ticket[]
+}
+
+model Team {
+  id           String     @id @unique @default(cuid())
+  name         String
+  abbreviation String     @db.VarChar(10)
+  Users        User[]
+  UserTeam     UserTeam[]
+  Projects     Project[]
+  Priorities   Priority[]
+  Statuses     Status[]
+}
+
+model UserTeam {
+  user   User   @relation(fields: [userId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+  userId String
+  teamId String
+
+  @@id([userId, teamId])
+}
+
+model Project {
+  id           String   @id @unique @default(cuid())
+  name         String
+  team         Team     @relation(fields: [teamId], references: [id])
+  abbreviation String   @db.VarChar(5)
+  teamId       String
+  Tickets      Ticket[]
+}
+
+model Ticket {
+  id          String    @id @unique @default(cuid())
+  name        String
+  description String?
+  project     Project   @relation(fields: [projectId], references: [id])
+  assignee    User?     @relation(fields: [assigneeId], references: [id])
+  identifier  Int
+  startDate   DateTime?
+  dueDate     DateTime?
+  projectId   String
+  assigneeId  String?
+  priority    Priority? @relation(fields: [priorityId], references: [id])
+  status      Status?   @relation(fields: [statusId], references: [id])
+  priorityId  String?
+  statusId    String?
+}
+
+model Priority {
+  id       String   @id @unique @default(cuid())
+  name     String
+  isCustom Boolean?
+  team     Team?    @relation(fields: [teamId], references: [id])
+  colorHex String?
+  teamId   String?
+  tickets  Ticket[]
+}
+
+model Status {
+  id       String   @id @unique @default(cuid())
+  name     String
+  isCustom Boolean?
+  team     Team?    @relation(fields: [teamId], references: [id])
+  colorHex String?
+  teamId   String?
+  tickets  Ticket[]
+}
